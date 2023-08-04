@@ -3,6 +3,8 @@
 namespace Database\Seeders;
 
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Student;
+use App\Models\User;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -14,10 +16,14 @@ class DatabaseSeeder extends Seeder
     {
         // \App\Models\User::factory(10)->create();
 
-         \App\Models\User::factory()->create([
+         User::factory()->create([
              'name' => 'Sam',
              'email' => 'sam@asapcomputers.co.uk',
              'password' => bcrypt('asap3434'),
          ]);
+
+         Student::factory(10)->create();
+
+         $this->call(StandardSeeder::class);
     }
 }
