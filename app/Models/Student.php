@@ -11,6 +11,8 @@ class Student extends Model
 {
     use HasFactory;
 
+//    public mixed $standard_id;
+//    public mixed $name;
     protected $fillable = ['name', 'student_id','address_1','address_2','standard_id'];
 
     /**

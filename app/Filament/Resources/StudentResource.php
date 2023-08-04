@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Events\PromoteStudent;
 use App\Filament\Resources\StudentResource\Pages;
 use App\Filament\Resources\StudentResource\RelationManagers;
 use App\Models\Student;
@@ -12,6 +13,7 @@ use Filament\Resources\Form;
 use Filament\Resources\Resource;
 use Filament\Resources\Table;
 use Filament\Tables;
+use Filament\Tables\Actions\BulkAction;
 use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\Layout\Panel;
@@ -20,6 +22,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 
@@ -88,7 +91,8 @@ class StudentResource extends Resource
 //                          ->sortable()
 //                          ->searchable(),
                 TextColumn::make('standard.name')
-                          ->searchable(),
+                          ->searchable()
+                          ->sortable(),
                 TextColumn::make('created_at')
                           ->dateTime()
                           ->sortable(),
@@ -120,8 +124,55 @@ class StudentResource extends Resource
             ])
             ->actions([
                 EditAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('Promote')
+                                         ->action(function (Student $record) {
+                                             ++$record->standard_id;
+                                             $record->save();
+                                         })
+                                         ->color('success')
+                                         ->icon('heroicon-o-arrow-up')
+                                         ->requiresConfirmation(),
+                    Tables\Actions\Action::make('Demote')
+                                         ->action(function (Student $record) {
+                                             if ($record->standard_id > 1) {
+                                                 --$record->standard_id;
+                                                 $record->save();
+                                             }
+                                         })
+                                         ->color('danger')
+                                         ->icon('heroicon-o-arrow-down')
+                                         ->requiresConfirmation(),
+                ]),
             ])
             ->bulkActions([
+                BulkAction::make('Promote selected')
+                          ->action(function (Collection $records) {
+                              $records->each(function ($record) {
+                                  event(new PromoteStudent($record));
+
+
+//                                  ++$record->standard_id;
+//                                  $record->save();
+                              });
+                          })
+                          ->color('success')
+                          ->icon('heroicon-o-arrow-up')
+                          ->requiresConfirmation()
+                          ->deselectRecordsAfterCompletion(),
+                BulkAction::make('Demote selected')
+                          ->action(function (Collection $records) {
+                              $records->each(function ($record) {
+                                  if ($record->standard_id > 1) {
+                                      --$record->standard_id;
+                                      $record->save();
+                                  }
+                              });
+                          })
+                          ->color('danger')
+                          ->icon('heroicon-o-arrow-down')
+                          ->requiresConfirmation()
+                          ->deselectRecordsAfterCompletion(),
                 DeleteBulkAction::make(),
             ]);
     }
@@ -129,7 +180,7 @@ class StudentResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\GuardiansRelationManager::class
         ];
     }
 
